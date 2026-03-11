@@ -6,6 +6,7 @@ import { NewObservationPage } from "./pages/NewObservationPage";
 import { LogDetailPage } from "./pages/LogDetailPage";
 import { EditObservationPage } from "./pages/EditObservationPage";
 import { ObserveScoreDebugPage } from "./pages/ObserveScoreDebugPage";
+import { ObservationPlannerPage } from "./pages/ObservationPlannerPage";
 import { useAuth } from "./auth/AuthContext";
 
 function App() {
@@ -17,6 +18,12 @@ function App() {
         <div className="flex items-center gap-4">
           <Link to="/" className="text-xl font-bold tracking-tight">
             AstroScout
+          </Link>
+          <Link
+            to="/plan"
+            className="text-sm text-slate-400 hover:text-sky-300"
+          >
+            Plan
           </Link>
           {isAuthenticated && (
             <Link
@@ -64,6 +71,7 @@ function App() {
           <Route path="/logs/:id/edit" element={<EditObservationPage />} />
           <Route path="/logs/:id" element={<LogDetailPage />} />
           <Route path="/debug/score" element={<ObserveScoreDebugPage />} />
+          <Route path="/plan" element={<ObservationPlannerPage />} />
         </Routes>
       </main>
     </div>

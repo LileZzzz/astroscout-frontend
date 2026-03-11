@@ -178,6 +178,8 @@ export function NewObservationPage() {
                 name="lat"
                 type="number"
                 step="0.000001"
+                min={-90}
+                max={90}
                 value={form.lat}
                 onChange={handleChange}
                 required
@@ -193,6 +195,8 @@ export function NewObservationPage() {
                 name="lng"
                 type="number"
                 step="0.000001"
+                min={-180}
+                max={180}
                 value={form.lng}
                 onChange={handleChange}
                 required
