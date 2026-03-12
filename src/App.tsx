@@ -7,6 +7,7 @@ import { LogDetailPage } from "./pages/LogDetailPage";
 import { EditObservationPage } from "./pages/EditObservationPage";
 import { ObserveScoreDebugPage } from "./pages/ObserveScoreDebugPage";
 import { ObservationPlannerPage } from "./pages/ObservationPlannerPage";
+import { ChatPage } from "./pages/ChatPage";
 import { useAuth } from "./auth/AuthContext";
 
 function App() {
@@ -24,6 +25,12 @@ function App() {
             className="text-sm text-slate-400 hover:text-sky-300"
           >
             Plan
+          </Link>
+          <Link
+            to="/chat"
+            className="text-sm text-slate-400 hover:text-sky-300"
+          >
+            AI Chat
           </Link>
           {isAuthenticated && (
             <Link
@@ -72,6 +79,7 @@ function App() {
           <Route path="/logs/:id" element={<LogDetailPage />} />
           <Route path="/debug/score" element={<ObserveScoreDebugPage />} />
           <Route path="/plan" element={<ObservationPlannerPage />} />
+          <Route path="/chat" element={<ChatPage />} />
         </Routes>
       </main>
     </div>
