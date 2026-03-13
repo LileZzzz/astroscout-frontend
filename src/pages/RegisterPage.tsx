@@ -5,7 +5,6 @@ import { api } from "../api";
 
 type RegisterResponse = {
   userId: number;
-  email: string;
   username: string;
   token: string | null;
   message: string;
@@ -14,7 +13,6 @@ type RegisterResponse = {
 export function RegisterPage() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +25,6 @@ export function RegisterPage() {
 
     try {
       await api.post<RegisterResponse>("/api/auth/register", {
-        email,
         username,
         password,
       });
@@ -46,21 +43,6 @@ export function RegisterPage() {
         <h1 className="text-xl font-semibold mb-4">Create an AstroScout account</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm mb-1" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-              required
-            />
-          </div>
-
           <div>
             <label className="block text-sm mb-1" htmlFor="username">
               Username

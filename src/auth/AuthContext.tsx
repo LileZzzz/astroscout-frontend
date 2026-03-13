@@ -1,14 +1,13 @@
 import {
   createContext,
-  ReactNode,
   useContext,
   useEffect,
   useState,
 } from "react";
+import type { ReactNode } from "react";
 
 type AuthUser = {
   id: number;
-  email: string;
   username: string;
 };
 
@@ -22,6 +21,7 @@ type AuthContextValue = {
   token: string | null;
   isAuthenticated: boolean;
   login: (user: AuthUser, token: string) => void;
+  updateUser: (user: AuthUser) => void;
   logout: () => void;
 };
 
@@ -61,6 +61,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState({ user, token });
   };
 
+  const updateUser = (user: AuthUser) => {
+    window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+    setState((prev) => ({ ...prev, user }));
+  };
+
   const logout = () => {
     window.localStorage.removeItem(TOKEN_KEY);
     window.localStorage.removeItem(USER_KEY);
@@ -72,6 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     token: state.token,
     isAuthenticated: Boolean(state.user && state.token),
     login,
+    updateUser,
     logout,
   };
 

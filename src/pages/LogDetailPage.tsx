@@ -11,6 +11,7 @@ type LogDetail = {
   description: string | null;
   observedAt: string;
   locationName: string | null;
+  coverImageUrl: string | null;
   lat: number;
   lng: number;
   bortleScale: number | null;
@@ -128,7 +129,7 @@ export function LogDetailPage() {
     if (!confirmed) return;
     try {
       await api.delete(`/api/logs/${id}`);
-      navigate("/");
+      navigate("/community");
     } catch (err: unknown) {
       const ax = err as { response?: { status: number } };
       if (ax.response?.status === 403) {
@@ -168,17 +169,17 @@ export function LogDetailPage() {
 
   if (state.status === "loading") {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-slate-400">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="glass-panel px-6 py-4 text-slate-300">Loading...</div>
       </div>
     );
   }
 
   if (state.status === "error") {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-4">
-        <p className="text-red-400">{state.message}</p>
-        <Link to="/" className="text-sky-400 hover:text-sky-300 text-sm">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <div className="glass-panel border-red-300/40 px-6 py-4 text-red-300">{state.message}</div>
+        <Link to="/" className="text-cyan-200 hover:text-cyan-100 text-sm">
           Back to Feed
         </Link>
       </div>
@@ -209,10 +210,11 @@ export function LogDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <main className="max-w-2xl mx-auto border-x border-slate-800 min-h-screen px-4 py-6">
+    <div className="min-h-screen">
+      <main className="mx-auto w-full max-w-[92rem] px-3 py-6 sm:px-4">
+        <div className="glass-panel-strong min-h-[70vh] p-4 sm:p-6">
         <div className="mb-6">
-          <Link to="/" className="text-slate-400 hover:text-white text-sm">
+          <Link to="/community" className="text-slate-400 hover:text-white text-sm">
             ← Back to Feed
           </Link>
         </div>
@@ -234,6 +236,17 @@ export function LogDetailPage() {
               <p className="text-slate-500 text-sm mt-1">{log.locationName}</p>
             )}
           </header>
+
+          {log.coverImageUrl && (
+            <div className="overflow-hidden rounded-xl border border-slate-700/80 bg-slate-900/50">
+              <img
+                src={log.coverImageUrl}
+                alt={log.title}
+                className="max-h-[460px] w-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
 
           {log.description && (
             <div className="text-slate-300 whitespace-pre-wrap break-words">
@@ -271,7 +284,7 @@ export function LogDetailPage() {
               </button>
             </div>
           )}
-          <div className="flex items-center gap-6 pt-2 border-t border-slate-800">
+          <div className="flex items-center gap-6 pt-2 border-t border-slate-700/80">
             <button
               type="button"
               onClick={handleLike}
@@ -291,7 +304,7 @@ export function LogDetailPage() {
           </div>
         </article>
 
-        <section className="mt-8 pt-6 border-t border-slate-800">
+        <section className="mt-8 pt-6 border-t border-slate-700/80">
           <h2 className="text-lg font-semibold text-white mb-4">Comments</h2>
 
           {isAuthenticated ? (
@@ -369,6 +382,7 @@ export function LogDetailPage() {
             <p className="text-slate-500 text-sm">No comments yet.</p>
           )}
         </section>
+        </div>
       </main>
     </div>
   );

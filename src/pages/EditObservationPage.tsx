@@ -9,6 +9,7 @@ type EditLogRequest = {
   description: string | null;
   observedAt: string;
   locationName: string | null;
+  coverImageUrl: string | null;
   lat: number;
   lng: number;
   bortleScale: number | null;
@@ -25,6 +26,7 @@ type LogDetail = {
   description: string | null;
   observedAt: string;
   locationName: string | null;
+  coverImageUrl: string | null;
   lat: number;
   lng: number;
   bortleScale: number | null;
@@ -43,6 +45,7 @@ export function EditObservationPage() {
     description: "",
     observedAtLocal: "",
     locationName: "",
+    coverImageUrl: "",
     lat: "",
     lng: "",
     bortleScale: "",
@@ -53,6 +56,7 @@ export function EditObservationPage() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,6 +82,7 @@ export function EditObservationPage() {
           description: log.description ?? "",
           observedAtLocal: localISO,
           locationName: log.locationName ?? "",
+          coverImageUrl: log.coverImageUrl ?? "",
           lat: String(log.lat),
           lng: String(log.lng),
           bortleScale: log.bortleScale != null ? String(log.bortleScale) : "",
@@ -137,6 +142,7 @@ export function EditObservationPage() {
         description: form.description || null,
         observedAt: new Date(form.observedAtLocal).toISOString(),
         locationName: form.locationName || null,
+        coverImageUrl: form.coverImageUrl.trim() || null,
         lat: Number(form.lat),
         lng: Number(form.lng),
         bortleScale: form.bortleScale ? Number(form.bortleScale) : null,
@@ -154,6 +160,23 @@ export function EditObservationPage() {
     }
   }
 
+  async function handleUploadCoverImage(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    setUploadingImage(true);
+    setError(null);
+    try {
+      const response = await api.post<{ url: string }>("/api/uploads/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setForm((prev) => ({ ...prev, coverImageUrl: response.data.url }));
+    } catch {
+      setError("Failed to upload cover image.");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
@@ -168,7 +191,7 @@ export function EditObservationPage() {
         <p className="text-red-400">{error}</p>
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/community")}
           className="text-sky-400 hover:text-sky-300 text-sm"
         >
           Back to Feed
@@ -244,6 +267,40 @@ export function EditObservationPage() {
                 className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1" htmlFor="coverImageUrl">
+              Cover image URL
+            </label>
+            <input
+              id="coverImageUrl"
+              name="coverImageUrl"
+              type="url"
+              value={form.coverImageUrl}
+              onChange={handleChange}
+              placeholder="https://..."
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+            <p className="mt-1 text-xs text-slate-400">You can paste a URL or upload an image below.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1" htmlFor="coverImageUpload">
+              Upload cover image
+            </label>
+            <input
+              id="coverImageUpload"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                handleUploadCoverImage(file);
+              }}
+              className="w-full text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-sky-400/25 file:px-3 file:py-1.5 file:text-sky-200"
+            />
+            {uploadingImage && <p className="mt-1 text-xs text-slate-400">Uploading image...</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 type FeedItem = {
   id: number;
@@ -9,6 +9,7 @@ type FeedItem = {
   username: string | null;
   title: string;
   locationName: string | null;
+  coverImageUrl: string | null;
   observedAt: string;
   isPublic: boolean;
 };
@@ -26,6 +27,7 @@ type FeedState =
   | { status: "loaded"; items: FeedItem[]; hasMore: boolean; loadingMore: boolean };
 
 export function FeedPage() {
+  const { isAuthenticated } = useAuth();
   const [state, setState] = useState<FeedState>({ status: "loading" });
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -100,49 +102,69 @@ export function FeedPage() {
 
   if (state.status === "loading") {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-slate-400">Loading...</div>
+      <div className="flex min-h-[55vh] items-center justify-center">
+        <div className="glass-panel px-6 py-4 text-sm text-slate-300">Loading feed...</div>
       </div>
     );
   }
 
   if (state.status === "error") {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-sm text-red-400">{state.message}</div>
+      <div className="flex min-h-[55vh] items-center justify-center">
+        <div className="glass-panel border-red-300/40 px-6 py-4 text-sm text-red-300">
+          {state.message}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <main className="max-w-2xl mx-auto border-x border-slate-800 min-h-screen">
-        <header className="sticky top-0 z-10 bg-black/80 backdrop-blur border-b border-slate-800 px-4 py-3">
-          <h1 className="text-xl font-bold">Feed</h1>
-        </header>
-
-        <div className="divide-y divide-slate-800">
-          {state.items.map((item) => (
-            <FeedCard key={item.id} item={item} />
-          ))}
+    <section className="mx-auto w-full max-w-[92rem] space-y-5">
+      <header className="glass-panel p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="label-muted">Community</p>
+            <h1 className="mt-2 text-3xl font-semibold text-slate-50">Observation Feed</h1>
+            <p className="mt-2 max-w-2xl text-sm text-slate-200">
+              Track recent sessions from the AstroScout community and open each log for details.
+            </p>
+          </div>
+          <div className="md:pb-1">
+            {isAuthenticated && (
+              <Link to="/logs/new" className="btn-primary">
+                New log
+              </Link>
+            )}
+            {!isAuthenticated && (
+              <Link to="/login" className="btn-ghost">
+                Log in to publish
+              </Link>
+            )}
+          </div>
         </div>
+      </header>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        {state.items.map((item) => (
+          <FeedCard key={item.id} item={item} />
+        ))}
 
         {state.items.length === 0 && !state.loadingMore && (
-          <div className="py-12 text-center text-slate-500 text-sm">
-            No posts yet.
+          <div className="glass-panel p-10 text-center text-sm text-slate-500 xl:col-span-2">
+            No public observations yet.
           </div>
         )}
 
         {state.status === "loaded" && state.hasMore && (
           <div
             ref={sentinelRef}
-            className="py-6 flex justify-center text-slate-500 text-sm"
+            className="flex justify-center py-4 text-sm text-slate-500 xl:col-span-2"
           >
-            {state.loadingMore ? "Loading more..." : ""}
+            {state.loadingMore ? "Loading more posts..." : ""}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </section>
   );
 }
 
@@ -218,9 +240,19 @@ function FeedCard({ item }: FeedCardProps) {
   }
 
   return (
-    <article className="px-4 py-3 hover:bg-slate-900/30 transition-colors">
+    <article className="glass-panel overflow-hidden p-5 transition hover:bg-slate-900/70 sm:p-6">
+      {item.coverImageUrl && (
+        <div className="mb-5 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-200/40">
+          <img
+            src={item.coverImageUrl}
+            alt={item.title}
+            loading="lazy"
+            className="h-64 w-full object-cover"
+          />
+        </div>
+      )}
       <div
-        className="flex gap-3 cursor-pointer"
+        className="flex cursor-pointer gap-4"
         role="link"
         tabIndex={0}
         onClick={() => navigate(`/logs/${item.id}`)}
@@ -231,22 +263,22 @@ function FeedCard({ item }: FeedCardProps) {
           }
         }}
       >
-        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-400 text-sm font-medium">
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/12 text-sm font-semibold text-cyan-100">
           {(item.username ?? String(item.userId)).charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 text-sm">
             <span className="font-semibold text-white">{item.username ?? `User ${item.userId}`}</span>
             <span className="text-slate-500">·</span>
-            <span className="text-slate-500">{timeAgo}</span>
+            <span className="text-slate-400">{timeAgo}</span>
           </div>
-          <h2 className="text-[15px] font-normal text-white mt-0.5 break-words">
+          <h2 className="mt-1 break-words text-lg font-semibold text-slate-50">
             {item.title}
           </h2>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="mt-2 text-sm text-slate-300">
             {item.locationName ?? "Unknown location"}
           </p>
-          <div className="flex items-center gap-6 mt-3 text-slate-500">
+          <div className="mt-4 flex items-center gap-6 text-slate-400">
             <button
               type="button"
               onClick={(e) => {
@@ -254,16 +286,16 @@ function FeedCard({ item }: FeedCardProps) {
                 handleLike();
               }}
               disabled={updatingLike}
-              className="inline-flex items-center gap-1.5 text-sm hover:text-red-400 disabled:opacity-60 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-700/80 bg-slate-900/65 px-3 py-1.5 text-sm hover:border-rose-300/50 hover:text-rose-300 disabled:opacity-60"
               aria-label={liked ? "Unlike" : "Like"}
             >
-              <span className={liked ? "text-red-400" : ""}>
-                {liked ? "♥" : "♡"}
+              <span className={liked ? "font-semibold text-rose-300" : ""}>
+                {liked ? "Liked" : "Like"}
               </span>
               <span>{likeCount !== null ? likeCount : "–"}</span>
             </button>
-            <span className="inline-flex items-center gap-1.5 text-sm">
-              <span aria-hidden>💬</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-700/80 bg-slate-900/65 px-3 py-1.5 text-sm">
+              <span>Comments</span>
               <span>{commentCount !== null ? commentCount : "–"}</span>
             </span>
           </div>

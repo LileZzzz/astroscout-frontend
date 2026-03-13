@@ -9,6 +9,7 @@ type CreateLogRequest = {
   description: string;
   observedAt: string;
   locationName: string;
+  coverImageUrl: string | null;
   lat: number;
   lng: number;
   bortleScale: number | null;
@@ -26,6 +27,7 @@ export function NewObservationPage() {
     description: "",
     observedAtLocal: "",
     locationName: "",
+    coverImageUrl: "",
     lat: "",
     lng: "",
     bortleScale: "",
@@ -35,6 +37,7 @@ export function NewObservationPage() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isAuthenticated) {
@@ -80,6 +83,7 @@ export function NewObservationPage() {
         description: form.description,
         observedAt: observedAtDate.toISOString(),
         locationName: form.locationName,
+        coverImageUrl: form.coverImageUrl.trim() || null,
         lat: Number(form.lat),
         lng: Number(form.lng),
         bortleScale: form.bortleScale ? Number(form.bortleScale) : null,
@@ -90,11 +94,28 @@ export function NewObservationPage() {
 
       await api.post("/api/logs", payload);
 
-      navigate("/");
+      navigate("/community");
     } catch {
       setError("Failed to create observation. Please check your input.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleUploadCoverImage(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    setUploadingImage(true);
+    setError(null);
+    try {
+      const response = await api.post<{ url: string }>("/api/uploads/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setForm((prev) => ({ ...prev, coverImageUrl: response.data.url }));
+    } catch {
+      setError("Failed to upload cover image.");
+    } finally {
+      setUploadingImage(false);
     }
   }
 
@@ -168,6 +189,40 @@ export function NewObservationPage() {
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm mb-1" htmlFor="coverImageUrl">
+              Cover image URL
+            </label>
+            <input
+              id="coverImageUrl"
+              name="coverImageUrl"
+              type="url"
+              value={form.coverImageUrl}
+              onChange={handleChange}
+              placeholder="https://..."
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+            <p className="mt-1 text-xs text-slate-400">You can paste a URL or upload an image below.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1" htmlFor="coverImageUpload">
+              Upload cover image
+            </label>
+            <input
+              id="coverImageUpload"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                handleUploadCoverImage(file);
+              }}
+              className="w-full text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-sky-400/25 file:px-3 file:py-1.5 file:text-sky-200"
+            />
+            {uploadingImage && <p className="mt-1 text-xs text-slate-400">Uploading image...</p>}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm mb-1" htmlFor="lat">
@@ -220,6 +275,9 @@ export function NewObservationPage() {
                 onChange={handleChange}
                 className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
+              <p className="mt-1 text-xs text-slate-400">
+                Lower is darker sky. 1 = excellent dark site, 9 = bright inner-city sky.
+              </p>
             </div>
             <div>
               <label className="block text-sm mb-1" htmlFor="weatherCondition">
@@ -256,6 +314,9 @@ export function NewObservationPage() {
                 onChange={handleChange}
                 className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
+              <p className="mt-1 text-xs text-slate-400">
+                Atmospheric steadiness. 1 = very unstable stars, 5 = steady sharp stars.
+              </p>
             </div>
           </div>
 

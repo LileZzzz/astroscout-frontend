@@ -57,7 +57,7 @@ export function ChatPage() {
   return (
     <div className="max-w-2xl mx-auto min-h-[calc(100vh-4rem)] flex flex-col p-4">
       <h1 className="text-lg font-semibold text-slate-200 mb-2">
-        AI Astronomy Assistant
+        AstroScoutAssistant
       </h1>
       <p className="text-sm text-slate-500 mb-4">
         Ask about observing, celestial objects, or stargazing. E.g. What can I see tonight?
