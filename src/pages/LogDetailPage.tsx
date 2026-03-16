@@ -1,3 +1,4 @@
+import type React from "react";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { api } from "../api";
@@ -34,6 +35,33 @@ type PageState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "loaded"; log: LogDetail; comments: CommentItem[] };
+
+function CardBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-300/10 text-cyan-100">
+      {children}
+    </span>
+  );
+}
+
+function DetailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3h9l3 3v15H6z" />
+      <path d="M15 3v4h4" />
+      <path d="M9 12h6" />
+      <path d="M9 16h6" />
+    </svg>
+  );
+}
+
+function CommentIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 6h16v10H8l-4 4z" />
+    </svg>
+  );
+}
 
 export function LogDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -212,7 +240,7 @@ export function LogDetailPage() {
   return (
     <div className="min-h-screen">
       <main className="mx-auto w-full max-w-[92rem] px-3 py-6 sm:px-4">
-        <div className="glass-panel-strong min-h-[70vh] p-4 sm:p-6">
+        <div className="glass-panel-strong panel-elevated card-polish min-h-[70vh] p-4 sm:p-6">
         <div className="mb-6">
           <Link to="/community" className="text-slate-400 hover:text-white text-sm">
             ← Back to Feed
@@ -221,7 +249,13 @@ export function LogDetailPage() {
 
         <article className="space-y-4">
           <header>
-            <h1 className="text-2xl font-bold text-white break-words">{log.title}</h1>
+            <p className="section-eyebrow">Observation Log</p>
+            <div className="mt-2 flex items-start justify-between gap-3">
+              <h1 className="section-title-xl mt-0 break-words text-2xl sm:text-4xl">{log.title}</h1>
+              <CardBadge>
+                <DetailIcon />
+              </CardBadge>
+            </div>
             <div className="flex items-baseline gap-2 text-sm text-slate-500 mt-2">
               <span className="font-medium text-slate-300">{log.username}</span>
               <span>·</span>
@@ -249,7 +283,7 @@ export function LogDetailPage() {
           )}
 
           {log.description && (
-            <div className="text-slate-300 whitespace-pre-wrap break-words">
+            <div className="rounded-2xl border border-slate-700/60 bg-slate-950/45 p-4 text-slate-300 whitespace-pre-wrap break-words leading-7">
               {log.description}
             </div>
           )}
@@ -270,14 +304,14 @@ export function LogDetailPage() {
             <div className="flex items-center gap-3 text-sm text-slate-500">
               <button
                 type="button"
-                className="hover:text-sky-400"
+                className="btn-ghost"
                 onClick={() => navigate(`/logs/${log.id}/edit`)}
               >
                 Edit
               </button>
               <button
                 type="button"
-                className="hover:text-red-400"
+                className="btn-ghost text-red-200 hover:text-red-100"
                 onClick={handleDelete}
               >
                 Delete
@@ -305,7 +339,12 @@ export function LogDetailPage() {
         </article>
 
         <section className="mt-8 pt-6 border-t border-slate-700/80">
-          <h2 className="text-lg font-semibold text-white mb-4">Comments</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="section-title-lg mt-0 text-lg">Comments</h2>
+            <CardBadge>
+              <CommentIcon />
+            </CardBadge>
+          </div>
 
           {isAuthenticated ? (
             <form onSubmit={handleSubmitComment} className="mb-6">
@@ -315,13 +354,13 @@ export function LogDetailPage() {
                 placeholder="Write a comment..."
                 rows={3}
                 maxLength={1000}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none"
+                className="input-control min-h-[7rem] resize-none"
               />
               <div className="flex justify-end mt-2">
                 <button
                   type="submit"
                   disabled={!commentText.trim() || submittingComment}
-                  className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {submittingComment ? "Posting..." : "Post comment"}
                 </button>
@@ -347,7 +386,7 @@ export function LogDetailPage() {
                 user &&
                 (user.id === c.userId || user.id === log.userId);
               return (
-                <li key={c.id} className="flex gap-3">
+                <li key={c.id} className="glass-panel card-polish flex gap-3 p-4">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-400 text-xs font-medium">
                     {(c.username ?? String(c.userId)).charAt(0).toUpperCase()}
                   </div>

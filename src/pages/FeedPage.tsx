@@ -1,3 +1,4 @@
+import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../auth/AuthContext";
@@ -15,6 +16,25 @@ type FeedItem = {
 };
 
 const PAGE_SIZE = 20;
+
+function CardBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-300/10 text-cyan-100">
+      {children}
+    </span>
+  );
+}
+
+function LogIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3h9l3 3v15H6z" />
+      <path d="M15 3v4h4" />
+      <path d="M9 11h6" />
+      <path d="M9 15h6" />
+    </svg>
+  );
+}
 
 type FeedPageResponse = {
   content: FeedItem[];
@@ -120,12 +140,12 @@ export function FeedPage() {
 
   return (
     <section className="mx-auto w-full max-w-[92rem] space-y-5">
-      <header className="glass-panel p-5">
+      <header className="glass-panel panel-elevated panel-pad">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="label-muted">Community</p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-50">Observation Feed</h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-200">
+            <p className="section-eyebrow">Community</p>
+            <h1 className="section-title-xl">Observation Feed</h1>
+            <p className="section-copy-sm max-w-2xl text-slate-200">
               Track recent sessions from the AstroScout community and open each log for details.
             </p>
           </div>
@@ -240,7 +260,7 @@ function FeedCard({ item }: FeedCardProps) {
   }
 
   return (
-    <article className="glass-panel overflow-hidden p-5 transition hover:bg-slate-900/70 sm:p-6">
+    <article className="glass-panel panel-elevated card-polish overflow-hidden p-5 sm:p-6">
       {item.coverImageUrl && (
         <div className="mb-5 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-200/40">
           <img
@@ -272,9 +292,14 @@ function FeedCard({ item }: FeedCardProps) {
             <span className="text-slate-500">·</span>
             <span className="text-slate-400">{timeAgo}</span>
           </div>
-          <h2 className="mt-1 break-words text-lg font-semibold text-slate-50">
-            {item.title}
-          </h2>
+          <div className="mt-2 flex items-center gap-2">
+            <CardBadge>
+              <LogIcon />
+            </CardBadge>
+            <h2 className="break-words text-lg font-semibold text-slate-50">
+              {item.title}
+            </h2>
+          </div>
           <p className="mt-2 text-sm text-slate-300">
             {item.locationName ?? "Unknown location"}
           </p>

@@ -1,3 +1,4 @@
+import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 
@@ -23,23 +24,6 @@ type ScoreResponse = {
   };
 };
 
-type CelestialTarget = {
-  name: string;
-  type: string;
-  alt: number;
-  az: number;
-  magnitude: number;
-  needsTelescope: boolean;
-  description: string;
-};
-
-type BestWindow = {
-  start: string;
-  end: string;
-  quality: string;
-  reason: string;
-};
-
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
@@ -54,11 +38,68 @@ type ChatPayload = {
   weatherSummary?: string;
   moonPhaseLabel?: string;
   bortleScale?: number;
-  targetSummary?: string;
 };
 
 const AUTO_SUMMARY_PROMPT =
-  "Summarize tonight's weather and sky conditions in plain language, then give 3 practical observing suggestions and one backup plan if conditions worsen.";
+  "Summarize tonight's weather and sky conditions in plain language. Then list best observing windows and suggested targets, followed by 3 practical observing suggestions and one backup plan if conditions worsen.";
+
+function CardBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-300/35 bg-amber-300/12 text-amber-100">
+      {children}
+    </span>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 2v4" />
+      <path d="M16 2v4" />
+      <rect x="3" y="4" width="18" height="17" rx="2" />
+      <path d="M3 10h18" />
+    </svg>
+  );
+}
+
+function WeatherIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 18a4 4 0 1 1 1.2-7.8A5 5 0 0 1 18 12a3 3 0 0 1-1 5.83H7z" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" />
+    </svg>
+  );
+}
+
+function CityLightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 21h16" />
+      <path d="M7 21V9l5-3 5 3v12" />
+      <path d="M9 12h.01" />
+      <path d="M12 12h.01" />
+      <path d="M15 12h.01" />
+    </svg>
+  );
+}
+
+function AssistantIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="6" width="16" height="12" rx="3" />
+      <path d="M9 12h.01" />
+      <path d="M15 12h.01" />
+      <path d="M9 16h6" />
+    </svg>
+  );
+}
 
 function wrapLongitude(value: number): number {
   return ((value + 180 + 360) % 360) - 180;
@@ -66,14 +107,12 @@ function wrapLongitude(value: number): number {
 
 export function ObservationPlannerPage() {
   const minPlannerDate = new Date().toISOString().slice(0, 10);
-  const [lat, setLat] = useState("42.3601");
-  const [lng, setLng] = useState("-71.0589");
+  const [lat, setLat] = useState("42.36");
+  const [lng, setLng] = useState("-71.06");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ScoreResponse | null>(null);
-  const [targets, setTargets] = useState<CelestialTarget[]>([]);
-  const [bestWindows, setBestWindows] = useState<BestWindow[]>([]);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -134,8 +173,8 @@ export function ObservationPlannerPage() {
       const clampedLat = Math.max(-90, Math.min(90, clickLat));
       const wrappedLng = wrapLongitude(clickLng);
       marker.setLatLng([clampedLat, wrappedLng]);
-      setLat(clampedLat.toFixed(6));
-      setLng(wrappedLng.toFixed(6));
+      setLat(clampedLat.toFixed(2));
+      setLng(wrappedLng.toFixed(2));
     });
 
     mapInstanceRef.current = map;
@@ -164,7 +203,7 @@ export function ObservationPlannerPage() {
     map.panTo([clampedLat, wrappedLng]);
   }, [lat, lng]);
 
-  function buildChatPayload(message: string, scoreData: ScoreResponse | null, targetList: CelestialTarget[]): ChatPayload {
+  function buildChatPayload(message: string, scoreData: ScoreResponse | null): ChatPayload {
     const payload: ChatPayload = {
       message,
       lat: Number(lat),
@@ -179,17 +218,10 @@ export function ObservationPlannerPage() {
       payload.bortleScale = scoreData.lightPollution.bortleScale;
     }
 
-    if (targetList.length > 0) {
-      payload.targetSummary = targetList
-        .slice(0, 5)
-        .map((t) => `${t.name} (${t.type}, alt ${Math.round(t.alt)}°, mag ${t.magnitude.toFixed(1)})`)
-        .join("; ");
-    }
-
     return payload;
   }
 
-  async function requestAssistantMessage(message: string, scoreData: ScoreResponse | null, targetList: CelestialTarget[], appendUserBubble: boolean) {
+  async function requestAssistantMessage(message: string, scoreData: ScoreResponse | null, appendUserBubble: boolean) {
     if (chatLoading) return;
 
     setChatError(null);
@@ -199,7 +231,7 @@ export function ObservationPlannerPage() {
     setChatLoading(true);
 
     try {
-      const payload = buildChatPayload(message, scoreData, targetList);
+      const payload = buildChatPayload(message, scoreData);
       const res = await api.post<{ answer: string }>("/api/ai/chat", payload);
       setChatMessages((prev) => [...prev, { role: "assistant", content: res.data.answer }]);
     } catch (err: unknown) {
@@ -226,22 +258,14 @@ export function ObservationPlannerPage() {
     setLoading(true);
     setError(null);
     setData(null);
-    setTargets([]);
-    setBestWindows([]);
 
     try {
-      const [scoreRes, celestialRes, bestWindowRes] = await Promise.all([
-        api.get<ScoreResponse>("/api/observe/score", { params: { lat, lng, date } }),
-        api.get<CelestialTarget[]>("/api/observe/celestial", { params: { lat, lng, date } }),
-        api.get<BestWindow[]>("/api/observe/best-window", { params: { lat, lng, date } }),
-      ]);
+      const scoreRes = await api.get<ScoreResponse>("/api/observe/score", { params: { lat, lng, date } });
 
       setData(scoreRes.data);
-      setTargets(celestialRes.data);
-      setBestWindows(bestWindowRes.data);
-      void requestAssistantMessage(AUTO_SUMMARY_PROMPT, scoreRes.data, celestialRes.data, false);
+      void requestAssistantMessage(AUTO_SUMMARY_PROMPT, scoreRes.data, false);
     } catch {
-      setError("Failed to load observing score or targets. Please check inputs and try again.");
+      setError("Failed to load observing score. Please check inputs and try again.");
     } finally {
       setLoading(false);
     }
@@ -253,22 +277,31 @@ export function ObservationPlannerPage() {
     if (!text || chatLoading) return;
 
     setChatInput("");
-    await requestAssistantMessage(text, data, targets, true);
+    await requestAssistantMessage(text, data, true);
   }
 
   return (
     <section className="mx-auto w-full max-w-[92rem] space-y-6">
-      <header className="glass-panel p-6">
-        <p className="label-muted">Planner Workspace</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-50">Observation Planner Workspace</h1>
-        <p className="mt-2 text-sm text-slate-300">
+      <header className="glass-panel panel-elevated panel-pad-xl">
+        <p className="section-eyebrow">Planner Workspace</p>
+        <h1 className="section-title-xl">Observation Planner Workspace</h1>
+        <p className="section-copy-sm">
           Select location and date on the left. The AI on the right uses your selected coordinates and injected observing context to provide recommendations.
         </p>
       </header>
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1.25fr_0.75fr]">
         <div className="space-y-5">
-          <form onSubmit={handleSubmit} className="glass-panel-strong space-y-5 p-5 sm:p-6">
+          <form onSubmit={handleSubmit} className="glass-panel-strong panel-elevated card-polish space-y-5 p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="section-eyebrow">Input</p>
+                <p className="text-sm text-slate-300">Choose date and coordinates</p>
+              </div>
+              <CardBadge>
+                <CalendarIcon />
+              </CardBadge>
+            </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <label className="text-sm">
                 <span className="mb-1 block">
@@ -276,13 +309,19 @@ export function ObservationPlannerPage() {
                 </span>
                 <input
                   type="number"
-                  step="0.000001"
+                  step="0.01"
                   min={-90}
                   max={90}
                   value={lat}
                   onChange={(e) => setLat(e.target.value)}
+                  onBlur={() => {
+                    const value = Number(lat);
+                    if (!Number.isFinite(value)) return;
+                    const clamped = Math.max(-90, Math.min(90, value));
+                    setLat(clamped.toFixed(2));
+                  }}
                   required
-                  className="w-full rounded-xl border border-slate-700/80 bg-slate-950/75 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+                  className="input-control"
                 />
               </label>
               <label className="text-sm">
@@ -291,13 +330,19 @@ export function ObservationPlannerPage() {
                 </span>
                 <input
                   type="number"
-                  step="0.000001"
+                  step="0.01"
                   min={-180}
                   max={180}
                   value={lng}
                   onChange={(e) => setLng(e.target.value)}
+                  onBlur={() => {
+                    const value = Number(lng);
+                    if (!Number.isFinite(value)) return;
+                    const wrapped = wrapLongitude(value);
+                    setLng(wrapped.toFixed(2));
+                  }}
                   required
-                  className="w-full rounded-xl border border-slate-700/80 bg-slate-950/75 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+                  className="input-control"
                 />
               </label>
               <label className="text-sm">
@@ -310,7 +355,7 @@ export function ObservationPlannerPage() {
                   onChange={(e) => setDate(e.target.value)}
                   min={minPlannerDate}
                   required
-                  className="w-full rounded-xl border border-slate-700/80 bg-slate-950/75 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+                  className="input-control"
                 />
               </label>
             </div>
@@ -334,7 +379,7 @@ export function ObservationPlannerPage() {
 
           {data && (
             <section className="space-y-4">
-              <div className="glass-panel-strong flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+              <div className="glass-panel-strong panel-elevated card-polish flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="label-muted">Overall score</p>
                   <p className="mt-1 text-4xl font-semibold text-slate-50">
@@ -356,79 +401,53 @@ export function ObservationPlannerPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 text-xs text-slate-200 md:grid-cols-3">
-                <div className="glass-panel p-4 space-y-1.5">
-                  <p className="text-sm font-semibold text-slate-100">Weather</p>
+                <div className="glass-panel card-polish p-4 space-y-1.5">
+                  <div className="mb-1 flex items-center gap-2">
+                    <CardBadge>
+                      <WeatherIcon />
+                    </CardBadge>
+                    <p className="text-sm font-semibold text-slate-100">Weather</p>
+                  </div>
                   <p>Cloud cover: {data.weather.cloudCoverPercent}%</p>
                   <p>Visibility: {data.weather.visibilityKm} km</p>
                   <p>Humidity: {data.weather.humidityPercent}%</p>
                   <p>Wind: {data.weather.windSpeedMps} m/s</p>
                 </div>
-                <div className="glass-panel p-4 space-y-1.5">
-                  <p className="text-sm font-semibold text-slate-100">Astronomy</p>
+                <div className="glass-panel card-polish p-4 space-y-1.5">
+                  <div className="mb-1 flex items-center gap-2">
+                    <CardBadge>
+                      <MoonIcon />
+                    </CardBadge>
+                    <p className="text-sm font-semibold text-slate-100">Astronomy</p>
+                  </div>
                   <p>Moon phase: {data.astronomy.moonPhaseLabel}</p>
                   <p>Illuminated fraction: {Math.round(data.astronomy.moonPhase * 100)}%</p>
                 </div>
-                <div className="glass-panel p-4 space-y-1.5">
-                  <p className="text-sm font-semibold text-slate-100">Light pollution</p>
+                <div className="glass-panel card-polish p-4 space-y-1.5">
+                  <div className="mb-1 flex items-center gap-2">
+                    <CardBadge>
+                      <CityLightIcon />
+                    </CardBadge>
+                    <p className="text-sm font-semibold text-slate-100">Light pollution</p>
+                  </div>
                   <p>Bortle scale: {data.lightPollution.bortleScale}</p>
                 </div>
               </div>
 
-              {bestWindows.length > 0 && (
-                <div className="glass-panel p-4 space-y-2">
-                  <p className="text-sm font-semibold text-slate-100">Best observing windows</p>
-                  <ul className="space-y-2 text-xs text-slate-300">
-                    {bestWindows.map((w, idx) => (
-                      <li key={`${w.start}-${w.end}-${idx}`} className="rounded-xl border border-slate-700/70 bg-slate-900/65 p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-100">
-                            {w.start.slice(0, 5)} - {w.end.slice(0, 5)}
-                          </span>
-                          <span className="inline-flex items-center rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-cyan-200">
-                            {w.quality}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-slate-400">{w.reason}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {targets.length > 0 && (
-                <div className="glass-panel p-4 space-y-2">
-                  <p className="text-sm font-semibold text-slate-100">Suggested targets</p>
-                  <ul className="space-y-2 text-xs text-slate-300">
-                    {targets.map((t) => (
-                      <li key={t.name} className="rounded-xl border border-slate-700/70 bg-slate-900/65 p-3">
-                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-100">{t.name}</p>
-                            <p className="text-slate-400">
-                              {t.type} · mag {t.magnitude.toFixed(1)} · alt {Math.round(t.alt)}° · az {Math.round(t.az)}°
-                            </p>
-                          </div>
-                          <div className="md:text-right">
-                            <p className="text-slate-300">{t.description}</p>
-                            <p className="text-slate-500">
-                              {t.needsTelescope ? "Needs telescope" : "Binocular or naked-eye friendly"}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </section>
           )}
         </div>
 
-        <aside className="glass-panel-strong z-10 flex min-h-[560px] flex-col p-4 sm:p-5 xl:sticky xl:top-36 xl:h-[calc(100vh-11rem)] xl:max-h-[780px]">
+        <aside className="glass-panel-strong panel-elevated card-polish z-10 flex min-h-[560px] flex-col p-4 sm:p-5 xl:sticky xl:top-36 xl:h-[calc(100vh-11rem)] xl:max-h-[780px]">
           <div className="mb-3">
-            <h2 className="mt-1 text-xl font-semibold text-slate-50">AstroScoutAssistant</h2>
+            <div className="mt-1 flex items-center gap-2">
+              <CardBadge>
+                <AssistantIcon />
+              </CardBadge>
+              <h2 className="text-xl font-semibold text-slate-50">AstroScoutAssistant</h2>
+            </div>
             <p className="mt-2 text-xs text-slate-300">
-              Prompt context includes selected date and coordinates. When available, score, weather, moon phase, light pollution, and suggested targets are injected automatically.
+              Ask for plans, windows, targets, and backup strategies based on your selected location/date.
             </p>
           </div>
 
@@ -475,7 +494,7 @@ export function ObservationPlannerPage() {
               placeholder="Ask based on selected location/date..."
               maxLength={2000}
               disabled={chatLoading}
-              className="flex-1 rounded-xl border border-slate-700/80 bg-slate-950/75 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+              className="input-control"
             />
             <button
               type="submit"

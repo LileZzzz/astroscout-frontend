@@ -10,8 +10,10 @@ import { EditObservationPage } from "./pages/EditObservationPage";
 import { ObserveScoreDebugPage } from "./pages/ObserveScoreDebugPage";
 import { ObservationPlannerPage } from "./pages/ObservationPlannerPage.tsx";
 import { ProfilePage } from "./pages/ProfilePage";
+import { ChatPage } from "./pages/ChatPage";
 import { useAuth } from "./auth/AuthContext";
 import astroScoutLogo from "./assets/logo.png";
+import { ParticleBackground } from "./components/ParticleBackground.tsx";
 
 const Sky101Page = lazy(() =>
   import("./pages/Sky101Page.tsx").then((module) => ({ default: module.Sky101Page }))
@@ -35,11 +37,13 @@ function App() {
   const { isAuthenticated, user, logout } = useAuth();
 
   const navBase =
-    "rounded-full px-3 py-1.5 text-sm font-medium transition-colors";
+    "min-w-[6.5rem] rounded-full px-3 py-1.5 text-center text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0";
 
   return (
     <div className="app-shell">
-      <header className="sticky top-0 z-20 bg-slate-900/45 backdrop-blur-xl">
+      <ParticleBackground />
+
+      <header className="sticky top-0 z-20 border-b border-slate-700/40 bg-slate-950/35 backdrop-blur-xl">
         <div className="pointer-events-none absolute left-2 top-2 z-30 sm:left-4 sm:top-3">
           <div className="pointer-events-auto flex flex-col items-start gap-2">
             <NavLink
@@ -58,46 +62,56 @@ function App() {
         <div className="content-wrap py-4 pt-28 sm:pt-32 lg:pt-4">
           <div className="grid gap-3 lg:grid-rows-[auto_auto]">
             <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-              <span className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
+              <span className="text-gradient text-sm font-semibold tracking-[0.08em]">
                 AstroScout Beta
               </span>
 
               <div className="ml-auto flex items-center gap-3">
                 {!isAuthenticated && (
-                  <>
-                    <NavLink to="/login" className="btn-ghost">
-                      Log in
-                    </NavLink>
-                    <NavLink to="/register" className="btn-primary">
-                      Create account
-                    </NavLink>
-                  </>
+                  <NavLink to="/login" className="btn-ghost">
+                    Log in
+                  </NavLink>
                 )}
                 {isAuthenticated && (
-                  <>
-                    <span className="rounded-full border border-slate-600/80 bg-slate-900/50 px-3 py-1.5 text-xs text-slate-200">
+                  <div className="group relative">
+                    <button
+                      type="button"
+                      className="btn-ghost data-[open=true]:border-amber-300/50 data-[open=true]:text-white"
+                    >
                       {user?.username}
-                    </span>
-                    <NavLink to="/profile" className="btn-ghost">
-                      Profile
-                    </NavLink>
-                    <button type="button" onClick={logout} className="btn-ghost">
-                      Log out
                     </button>
-                  </>
+
+                    <div className="pointer-events-none absolute right-0 top-full z-30 mt-2 w-44 translate-y-1 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                      <div className="glass-panel-strong panel-elevated p-2">
+                        <NavLink
+                          to="/profile"
+                          className="block rounded-xl px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-700/45 hover:text-white"
+                        >
+                          Profile
+                        </NavLink>
+                        <button
+                          type="button"
+                          onClick={logout}
+                          className="block w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-slate-700/45 hover:text-white"
+                        >
+                          Log out
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="glass-panel-strong px-4 py-3 sm:px-5">
+            <div className="glass-panel-strong glow-primary px-4 py-3 sm:px-5">
               <nav className="flex flex-wrap items-center justify-between gap-2">
                 <NavLink
                   to="/"
                   className={({ isActive }) =>
-                    `min-w-[6.5rem] text-center ${navBase} ${
+                    `${navBase} ${
                       isActive
-                        ? "bg-cyan-300/15 text-cyan-200"
-                        : "text-slate-200 hover:bg-slate-700/55 hover:text-white"
+                        ? "bg-cyan-400/20 text-cyan-100 shadow-[0_0_0_1px_rgba(56,189,248,0.25),0_10px_22px_rgba(47,184,255,0.14)]"
+                        : "text-slate-200 hover:bg-slate-700/45 hover:text-white"
                     }`
                   }
                 >
@@ -106,10 +120,10 @@ function App() {
                 <NavLink
                   to="/community"
                   className={({ isActive }) =>
-                    `min-w-[6.5rem] text-center ${navBase} ${
+                    `${navBase} ${
                       isActive
-                        ? "bg-cyan-300/15 text-cyan-200"
-                        : "text-slate-200 hover:bg-slate-700/55 hover:text-white"
+                        ? "bg-cyan-400/20 text-cyan-100 shadow-[0_0_0_1px_rgba(56,189,248,0.25),0_10px_22px_rgba(47,184,255,0.14)]"
+                        : "text-slate-200 hover:bg-slate-700/45 hover:text-white"
                     }`
                   }
                 >
@@ -118,10 +132,10 @@ function App() {
                 <NavLink
                   to="/plan"
                   className={({ isActive }) =>
-                    `min-w-[6.5rem] text-center ${navBase} ${
+                    `${navBase} ${
                       isActive
-                        ? "bg-cyan-300/15 text-cyan-200"
-                        : "text-slate-200 hover:bg-slate-700/55 hover:text-white"
+                        ? "bg-cyan-400/20 text-cyan-100 shadow-[0_0_0_1px_rgba(56,189,248,0.25),0_10px_22px_rgba(47,184,255,0.14)]"
+                        : "text-slate-200 hover:bg-slate-700/45 hover:text-white"
                     }`
                   }
                 >
@@ -130,10 +144,10 @@ function App() {
                 <NavLink
                   to="/sky101"
                   className={({ isActive }) =>
-                    `min-w-[6.5rem] text-center ${navBase} ${
+                    `${navBase} ${
                       isActive
-                        ? "bg-cyan-300/15 text-cyan-200"
-                        : "text-slate-200 hover:bg-slate-700/55 hover:text-white"
+                        ? "bg-cyan-400/20 text-cyan-100 shadow-[0_0_0_1px_rgba(56,189,248,0.25),0_10px_22px_rgba(47,184,255,0.14)]"
+                        : "text-slate-200 hover:bg-slate-700/45 hover:text-white"
                     }`
                   }
                 >
@@ -145,7 +159,7 @@ function App() {
         </div>
       </header>
 
-      <main className="content-wrap py-8">
+      <main className="content-wrap relative z-10 py-8">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/community" element={<FeedPage />} />
@@ -155,11 +169,16 @@ function App() {
           <Route path="/logs/:id/edit" element={<EditObservationPage />} />
           <Route path="/logs/:id" element={<LogDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/assistant" element={<ChatPage />} />
           <Route path="/debug/score" element={<ObserveScoreDebugPage />} />
           <Route path="/plan" element={<ObservationPlannerPage />} />
           <Route path="/sky101" element={<Sky101Route />} />
         </Routes>
       </main>
+
+      <div className="pointer-events-none fixed bottom-4 right-4 z-30 rounded-full bg-slate-950/50 px-3 py-1.5 text-xs tracking-[0.04em] text-slate-300 backdrop-blur-md">
+        Author: Lilez (Larry)
+      </div>
     </div>
   );
 }

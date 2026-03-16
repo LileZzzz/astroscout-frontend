@@ -68,9 +68,10 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-      <div className="w-full max-w-sm rounded-xl border border-slate-800 bg-slate-900/80 p-6">
-        <h1 className="text-xl font-semibold mb-4">Sign in to AstroScout</h1>
+    <section className="mx-auto flex min-h-[70vh] w-full max-w-[92rem] items-center justify-center py-10">
+      <div className="glass-panel-strong panel-elevated w-full max-w-md p-6 sm:p-7">
+        <p className="section-eyebrow">Account Access</p>
+        <h1 className="section-title-lg">Sign in to AstroScout</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -83,7 +84,7 @@ export function LoginPage() {
               autoComplete="username"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="input-control"
               required
             />
           </div>
@@ -98,7 +99,7 @@ export function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="input-control"
               required
             />
           </div>
@@ -112,7 +113,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-md bg-sky-500 py-2 text-sm font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-60"
+            className="btn-primary w-full disabled:opacity-60"
           >
             {submitting ? "Signing in..." : "Sign in"}
           </button>
@@ -121,13 +122,20 @@ export function LoginPage() {
             type="button"
             onClick={handleDemoLogin}
             disabled={submitting}
-            className="w-full rounded-md border border-cyan-300/40 bg-cyan-300/10 py-2 text-sm font-medium text-cyan-100 hover:bg-cyan-300/20 disabled:opacity-60"
+            className="btn-ghost w-full disabled:opacity-60"
           >
             {submitting ? "Please wait..." : "Try demo account"}
           </button>
+
+          <p className="text-center text-sm text-slate-400">
+            Need an account?{" "}
+            <a href="/register" className="text-amber-200 hover:text-amber-100">
+              Create one here
+            </a>
+          </p>
         </form>
       </div>
-    </div>
+    </section>
   );
 }
 

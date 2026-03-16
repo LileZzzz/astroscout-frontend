@@ -55,15 +55,23 @@ export function ChatPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto min-h-[calc(100vh-4rem)] flex flex-col p-4">
-      <h1 className="text-lg font-semibold text-slate-200 mb-2">
-        AstroScoutAssistant
-      </h1>
-      <p className="text-sm text-slate-500 mb-4">
-        Ask about observing, celestial objects, or stargazing. E.g. What can I see tonight?
-      </p>
+    <section className="mx-auto flex min-h-[72vh] w-full max-w-[92rem] flex-col gap-5">
+      <header className="glass-panel panel-elevated panel-pad">
+        <p className="section-eyebrow">AI Assistant</p>
+        <h1 className="section-title-xl">AstroScoutAssistant</h1>
+        <p className="section-copy-sm max-w-3xl">
+          Ask about observing, celestial objects, or stargazing. For example: What can I see tonight?
+        </p>
+      </header>
 
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4 rounded-lg border border-slate-800 bg-slate-900/50 p-4 min-h-[200px]">
+      <div className="glass-panel-strong panel-elevated flex min-h-[34rem] flex-1 flex-col p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap gap-2 text-xs text-slate-300">
+          <span className="rounded-full border border-slate-700/70 bg-slate-950/55 px-3 py-1.5">Observation planning</span>
+          <span className="rounded-full border border-slate-700/70 bg-slate-950/55 px-3 py-1.5">Celestial objects</span>
+          <span className="rounded-full border border-slate-700/70 bg-slate-950/55 px-3 py-1.5">Stargazing tips</span>
+        </div>
+
+      <div className="flex-1 overflow-y-auto space-y-4 mb-4 rounded-2xl border border-slate-700/80 bg-slate-950/45 p-4 min-h-[200px]">
         {messages.length === 0 && !loading && (
           <p className="text-slate-500 text-sm">Send a message to start.</p>
         )}
@@ -79,8 +87,8 @@ export function ChatPage() {
             <div
               className={
                 m.role === "user"
-                  ? "max-w-[85%] rounded-lg bg-sky-600/80 text-white px-3 py-2 text-sm"
-                  : "max-w-[85%] rounded-lg bg-slate-700 text-slate-200 px-3 py-2 text-sm whitespace-pre-wrap"
+                  ? "max-w-[85%] rounded-2xl bg-[linear-gradient(135deg,rgba(245,166,35,0.95),rgba(217,93,0,0.9))] px-4 py-3 text-sm text-slate-950 shadow-[0_12px_28px_rgba(245,166,35,0.18)]"
+                  : "max-w-[85%] rounded-2xl border border-slate-700/70 bg-slate-900/75 px-4 py-3 text-sm text-slate-200 whitespace-pre-wrap"
               }
             >
               {m.content}
@@ -89,7 +97,7 @@ export function ChatPage() {
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="rounded-lg bg-slate-700 text-slate-400 px-3 py-2 text-sm">
+            <div className="rounded-2xl border border-slate-700/70 bg-slate-900/75 px-4 py-3 text-sm text-slate-400">
               Thinking…
             </div>
           </div>
@@ -107,18 +115,19 @@ export function ChatPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question…"
-          className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"
+          className="input-control flex-1"
           disabled={loading}
           maxLength={2000}
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Send
         </button>
       </form>
-    </div>
+      </div>
+    </section>
   );
 }

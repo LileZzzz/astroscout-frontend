@@ -19,6 +19,34 @@ type MyLog = {
   isPublic: boolean;
 };
 
+function CardBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-sky-300/35 bg-sky-300/12 text-sky-100">
+      {children}
+    </span>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </svg>
+  );
+}
+
+function LogsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 4h11v16H8" />
+      <path d="M5 8h11" />
+      <path d="M5 12h11" />
+      <path d="M5 16h11" />
+    </svg>
+  );
+}
+
 export function ProfilePage() {
   const { isAuthenticated, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +54,6 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-  const [cleaningNoImageLogs, setCleaningNoImageLogs] = useState(false);
 
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [myLogs, setMyLogs] = useState<MyLog[]>([]);
@@ -37,6 +64,7 @@ export function ProfilePage() {
 
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isDemoAccount = profile?.username.toLowerCase().startsWith("demo") ?? false;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -75,6 +103,10 @@ export function ProfilePage() {
   async function handleSaveProfile(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!profile) return;
+    if (isDemoAccount) {
+      setError("Demo accounts cannot change username.");
+      return;
+    }
 
     setSavingProfile(true);
     setMessage(null);
@@ -98,6 +130,10 @@ export function ProfilePage() {
 
   async function handleChangePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isDemoAccount) {
+      setError("Demo accounts cannot change password.");
+      return;
+    }
     if (!newPassword || newPassword.length < 8) {
       setError("New password must be at least 8 characters.");
       return;
@@ -121,22 +157,6 @@ export function ProfilePage() {
     }
   }
 
-  async function handleDeleteNoImageLogs() {
-    setCleaningNoImageLogs(true);
-    setMessage(null);
-    setError(null);
-    try {
-      const res = await api.delete<{ deletedCount: number }>("/api/logs/cleanup/no-image");
-      const removed = res.data.deletedCount ?? 0;
-      setMyLogs((prev) => prev.filter((log) => log.coverImageUrl && log.coverImageUrl.trim() !== ""));
-      setMessage(`Deleted ${removed} log(s) without cover image.`);
-    } catch {
-      setError("Failed to delete logs without images.");
-    } finally {
-      setCleaningNoImageLogs(false);
-    }
-  }
-
   if (loading) {
     return (
       <div className="glass-panel p-6 text-sm text-slate-300">Loading profile...</div>
@@ -145,10 +165,10 @@ export function ProfilePage() {
 
   return (
     <section className="mx-auto w-full max-w-[92rem] space-y-5">
-      <header className="glass-panel p-5">
-        <p className="label-muted">Account</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-50">My Profile</h1>
-        <p className="mt-2 text-sm text-slate-300">
+      <header className="glass-panel panel-elevated panel-pad">
+        <p className="section-eyebrow">Account</p>
+        <h1 className="section-title-xl">My Profile</h1>
+        <p className="section-copy-sm">
           Update your username and password, and review your own observation logs.
         </p>
       </header>
@@ -163,13 +183,22 @@ export function ProfilePage() {
       )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_1.2fr]">
-        <section className="glass-panel-strong space-y-4 p-5">
+        <section className="glass-panel-strong panel-elevated card-polish space-y-4 p-5">
           <div className="flex items-center gap-3">
+            <CardBadge>
+              <UserIcon />
+            </CardBadge>
             <div className="text-sm text-slate-300">
               <p className="font-semibold text-slate-100">{profile?.username}</p>
               <p className="text-xs text-slate-400">Role: {profile?.role}</p>
             </div>
           </div>
+
+          {isDemoAccount && (
+            <div className="rounded-2xl border border-amber-300/25 bg-amber-300/10 p-4 text-sm leading-7 text-amber-100">
+              Demo account protection is enabled. Username and password changes are disabled for this account.
+            </div>
+          )}
 
           <form onSubmit={handleSaveProfile} className="space-y-3">
             <div>
@@ -180,14 +209,15 @@ export function ProfilePage() {
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={isDemoAccount}
                 required
-                className="w-full rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+                className="input-control disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
             <button
               type="submit"
-              disabled={savingProfile}
+              disabled={savingProfile || isDemoAccount}
               className="btn-primary disabled:opacity-60"
             >
               {savingProfile ? "Saving profile..." : "Save profile"}
@@ -201,21 +231,23 @@ export function ProfilePage() {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="Current password"
+              disabled={isDemoAccount}
               required
-              className="w-full rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+              className="input-control disabled:cursor-not-allowed disabled:opacity-60"
             />
             <input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="New password (min 8 chars)"
+              disabled={isDemoAccount}
               required
               minLength={8}
-              className="w-full rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
+              className="input-control disabled:cursor-not-allowed disabled:opacity-60"
             />
             <button
               type="submit"
-              disabled={savingPassword}
+              disabled={savingPassword || isDemoAccount}
               className="btn-ghost disabled:opacity-60"
             >
               {savingPassword ? "Updating password..." : "Update password"}
@@ -223,18 +255,15 @@ export function ProfilePage() {
           </form>
         </section>
 
-        <section className="glass-panel-strong p-5">
+        <section className="glass-panel-strong panel-elevated card-polish p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-slate-50">My Logs</h2>
+            <div className="flex items-center gap-2">
+              <CardBadge>
+                <LogsIcon />
+              </CardBadge>
+              <h2 className="text-xl font-semibold text-slate-50">My Logs</h2>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleDeleteNoImageLogs}
-                disabled={cleaningNoImageLogs}
-                className="btn-ghost disabled:opacity-60"
-              >
-                {cleaningNoImageLogs ? "Deleting..." : "Delete logs without image"}
-              </button>
               <Link to="/logs/new" className="btn-primary">
                 New log
               </Link>
@@ -246,7 +275,7 @@ export function ProfilePage() {
           ) : (
             <ul className="space-y-3">
               {myLogs.map((log) => (
-                <li key={log.id} className="rounded-xl border border-slate-700/80 bg-slate-900/55 p-3">
+                <li key={log.id} className="card-polish rounded-xl border border-slate-700/80 bg-slate-900/55 p-3">
                   {log.coverImageUrl && (
                     <img
                       src={log.coverImageUrl}
